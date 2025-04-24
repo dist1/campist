@@ -22,18 +22,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Navigate to HomeScreen after successful registration
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+      User? user = userCredential.user;
+
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "A verification link has been sent to your email. Please verify before logging in.",
+            ),
+            duration: Duration(seconds: 5),
+          ),
+        );
+
+        await _auth.signOut(); // Sign out after registration to enforce verification
+        Navigator.pop(context); // Go back to login
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = "Registration failed: ${e.message}");
     } catch (e) {
-      setState(() => _errorMessage = "Registration failed: ${e.toString()}");
+      setState(() => _errorMessage = "An error occurred: ${e.toString()}");
     }
   }
 

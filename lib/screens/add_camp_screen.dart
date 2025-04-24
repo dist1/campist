@@ -1,11 +1,17 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show kIsWeb; // ✅ Detect Web
+
+const String cloudinaryUploadPreset = 'campist';
+const String cloudinaryCloudName = 'dxmfceyvs';
+
 
 class AddCampScreen extends StatefulWidget {
   @override
@@ -43,17 +49,37 @@ Future<String?> _uploadImage() async {
 
   try {
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    Reference ref = FirebaseStorage.instance.ref().child('camp_images/$fileName');
+    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$cloudinaryCloudName/image/upload');
 
-    UploadTask uploadTask = kIsWeb
-        ? ref.putData(_webImage!)
-        : ref.putFile(_imageFile!);
+    var request = http.MultipartRequest('POST', uri);
+    request.fields['upload_preset'] = cloudinaryUploadPreset;
 
-    TaskSnapshot snapshot = await uploadTask;
-    return await snapshot.ref.getDownloadURL();
+    if (kIsWeb) {
+      request.files.add(http.MultipartFile.fromBytes(
+        'file',
+        _webImage!,
+        filename: '$fileName.jpg',
+      ));
+    } else {
+      request.files.add(await http.MultipartFile.fromPath(
+        'file',
+        _imageFile!.path,
+        filename: '$fileName.jpg',
+      ));
+    }
+
+    var response = await request.send();
+
+    if (response.statusCode == 200) {
+      final resStr = await response.stream.bytesToString();
+      final jsonRes = json.decode(resStr);
+      return jsonRes['secure_url'];
+    } else {
+      print('Cloudinary upload failed: ${response.statusCode}');
+      throw Exception('Cloudinary upload failed');
+    }
   } catch (e) {
-    // 👇 Add print/log here or rethrow it
-    print("Image Upload Error: $e");
+    print("Cloudinary Upload Error: $e");
     throw Exception("Image upload failed. Please try again.");
   }
 }
