@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "252603503077",
+    "project_id": "campist-8f611",
+    "storage_bucket": "campist-8f611.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:252603503077:android:eaaf205a7e452d95581f0c",
+        "android_client_info": {
+          "package_name": "com.example.campist_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCreQtPM5xIuIPmFP6TsY829K2ghPjQLzc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
